@@ -71,6 +71,9 @@ Options:
                         do not monitor the number of nodes in the cluster.
   -p PORT, --port=PORT  TCP port to probe.  The ElasticSearch API should be
                         listening here.  Defaults to 9200.
+  -r PREFIX, --prefix=PREFIX
+                        Optional prefix (e.g. 'es') for the ElasticSearch API.
+                        Defaults to ''.
   -y YELLOW_CRITICAL, --yellow-critical=TRUE
                         Instead of issuing a 'warning' for a yellow cluster
                         state, issue a 'critical' alert. Allows for greater
