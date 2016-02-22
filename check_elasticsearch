@@ -80,6 +80,18 @@ class ElasticSearchCheck(NagiosCheck):
                         "number. By default, do not monitor the "
                         "number of nodes in the cluster.")
 
+        self.add_option('s', 'min-shards', 'min_shards',
+                        "Issue a warning if the number of master-eligible "
+                        "shards in the cluster drops below this number. "
+                        "By default, do not monitor the number of shards "
+                        "in the cluster.")
+
+        self.add_option('i', 'min-indices', 'min_indices',
+                        "Issue a warning if the number of master-eligible "
+                        "indices in the cluster drops below this number. "
+                        "By default, do not monitor the number of indices "
+                        "in the cluster.")
+
         self.add_option('p', 'port', 'port',
                         "TCP port to probe. "
                         "The ElasticSearch API should be listening "
@@ -90,7 +102,8 @@ class ElasticSearchCheck(NagiosCheck):
                         "ElasticSearch API. Defaults to ''.")
 
         self.add_option('y', 'yellow-critical', 'yellow_critical',
-                        "Have plugin issue critical alert on yellow cluster state. Defaults to False.")
+                        "Have plugin issue critical alert on yellow cluster "
+                        "state. Defaults to False.")
 
     def check(self, opts, args):
         host = opts.host or "localhost"
@@ -98,6 +111,8 @@ class ElasticSearchCheck(NagiosCheck):
         prefix = opts.prefix or ""
         if not prefix.endswith('/'):
             prefix += '/'
+        min_shards = opts.min_shards or ""
+        min_indices = opts.min_indices or ""
 
         failure_domain = []
 
@@ -112,6 +127,24 @@ class ElasticSearchCheck(NagiosCheck):
                                      "than zero")
             except ValueError:
                 raise UsageError("Argument to -m/--master-nodes must "
+                                 "be a natural number")
+
+        if opts.min_shards is not None:
+            try:
+                if int(opts.min_shards) < 1:
+                    raise ValueError("'min_shards' must be greater "
+                                     "than zero")
+            except ValueError:
+                raise UsageError("Argument to -s/--min-shards must "
+                                 "be a natural number")
+
+        if opts.min_indices is not None:
+            try:
+                if int(opts.min_indices) < 1:
+                    raise ValueError("'min_indices' must be greater "
+                                     "than zero")
+            except ValueError:
+                raise UsageError("Argument to -i/--min-indices must "
                                  "be a natural number")
 
         yellow_critical = opts.yellow_critical and opts.yellow_critical.lower() not in ('f', 'false', 'n', 'no')
@@ -494,6 +527,34 @@ class ElasticSearchCheck(NagiosCheck):
 
         if downgraded:
             msg = ("Missing master-eligible nodes")
+
+        # Assertion:  You have as many master-eligible shards in the
+        # cluster as you think you ought to.
+        downgraded = False
+
+        if opts.min_shards is not None:
+            if n_shards < int(opts.min_shards):
+                downgraded |= self.downgrade_health(YELLOW)
+                detail.append("Expected to find %d master-eligible "
+                              "shards in the cluster but only found %d" %
+                              (int(opts.min_shards), n_shards))
+
+        if downgraded:
+            msg = ("Missing some shards")
+
+        # Assertion:  You have as many master-eligible indices in the
+        # cluster as you think you ought to.
+        downgraded = False
+
+        if opts.min_indices is not None:
+            if n_indices < int(opts.min_indices):
+                downgraded |= self.downgrade_health(YELLOW)
+                detail.append("Expected to find %d master-eligible "
+                              "indices in the cluster but only found %d" %
+                              (int(opts.min_indices), n_indices))
+
+        if downgraded:
+            msg = ("Missing some indices")
 
         # Assertion:  Replicas are not stored in the same failure domain 
         # as their primary.
