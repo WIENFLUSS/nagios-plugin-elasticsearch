@@ -69,6 +69,16 @@ Options:
                         Issue a warning if the number of master-eligible nodes
                         in the cluster drops below this number.  By default,
                         do not monitor the number of nodes in the cluster.
+  -s MIN_SHARDS, --min-shards=MIN_SHARDS
+                        Issue a warning if the number of master-eligible
+                        shards in the cluster drops below this number. By
+                        default, do not monitor the number of shards in the
+                        cluster.
+  -i MIN_INDICES, --min-indices=MIN_INDICES
+                        Issue a warning if the number of master-eligible
+                        indices in the cluster drops below this number. By
+                        default, do not monitor the number of indices in the
+                        cluster.
   -p PORT, --port=PORT  TCP port to probe.  The ElasticSearch API should be
                         listening here.  Defaults to 9200.
   -y YELLOW_CRITICAL, --yellow-critical=TRUE
